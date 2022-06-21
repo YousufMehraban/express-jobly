@@ -13,7 +13,6 @@ class Job {
     // can specify filters, returing a list of all matching jobs
 
     static async getAll(search={}){
-        
         const {title, minSalary, hasEquity} = search
         let queryLine = `SELECT id, title, salary, equity, company_handle FROM jobs`;
 
@@ -24,23 +23,22 @@ class Job {
             valuesArray.push(`%${title}%`)
             searchTerms.push(`title = ILIKE $${valuesArray.length}`)
         }
-
         if(minSalary !== undefined){
             valuesArray.push(+minSalary)
             searchTerms.push(`salary >= $${valuesArray.length}`)
         }
-
-        if(hasEquity === true){
+        if(hasEquity == true){
             searchTerms.push('equity > 0')
-        }else{
-            searchTerms.push('equity = 0')
         }
-        
+        if(hasEquity == false){
+            searchTerms.push('equity = 0 OR equity IS null')
+        }
         // constructing final queryLine
         if(searchTerms.length > 0){
             queryLine +=  ' WHERE ' + searchTerms.join(' AND ')
         }
         queryLine += ` ORDER BY title`
+        
         const jobs = await db.query(queryLine, valuesArray)
         return jobs.rows
 
@@ -53,8 +51,8 @@ class Job {
     static async get(id){
         const job = await db.query(`SELECT id, title, salary, equity, company_handle 
                                     FROM jobs WHERE id = $1`, [id])
+        if (!job) throw new NotFoundError('Job not Found');
         
-        if (!job) throw new NotFoundError();
         return job.rows[0]
     }
 
@@ -79,14 +77,31 @@ class Job {
     }
 
 
+    // updating an existing job
+    // returning the updated job
+    // {title, salary, equity} => {id, salary, equity, company_handle}
+
+    static async update({id, title, salary, equity}){
+        const result = await db.query(`UPDATE jobs SET title = $1, salary = $2, equity = $3
+                                        WHERE id = $4
+                                        RETURNING id, title, salary, equity, company_handle`,
+                                        [title, salary, equity, id])
+
+        if (!result.rows[0]){
+            throw new NotFoundError('Job not Found')
+        }
+        return result.rows[0]
+    }
 
 
+    // deleting an existing job
+    // returing the job id
+    static async remove(id){
+        const job = await db.query(`DELETE FROM jobs WHERE id = $1 RETURNING id`, [id])
+        if(!job.rows[0]) throw new NotFoundError('Job not found')
 
-
-
-
-
-
+        return job.rows[0]
+    }
 
 }
 

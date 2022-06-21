@@ -5,7 +5,7 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const { ensureLoggedIn, ensureIsAdmin, ensureIsAdminOrCurrentUser } = require("../middleware/auth");
+const { ensureIsAdmin, ensureIsAdminOrCurrentUser } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
@@ -119,5 +119,21 @@ router.delete("/:username", ensureIsAdminOrCurrentUser, async function (req, res
   }
 });
 
+
+// submitting application for a job
+// /post/:username/jobs/:id 
+// {"username", "job_id"} => {applied: job_id}
+
+router.post('/:username/jobs/:id', ensureIsAdminOrCurrentUser, async function(req, res, next){
+  try{
+      const username = req.params.username
+      const job_id = +req.params.id
+      await User.applyForJob({username, job_id})
+      return res.status(201).json({applied: job_id})
+
+  }catch(e){
+      return next(e)
+  }
+})
 
 module.exports = router;
