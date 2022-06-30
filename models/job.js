@@ -19,19 +19,19 @@ class Job {
         let valuesArray = [];
         let searchTerms = [];
 
-        if(title !== undefined){
-            valuesArray.push(`%${title}%`)
-            searchTerms.push(`title = ILIKE $${valuesArray.length}`)
-        }
         if(minSalary !== undefined){
-            valuesArray.push(+minSalary)
+            valuesArray.push(minSalary)
             searchTerms.push(`salary >= $${valuesArray.length}`)
         }
         if(hasEquity == true){
             searchTerms.push('equity > 0')
         }
         if(hasEquity == false){
-            searchTerms.push('equity = 0 OR equity IS null')
+            searchTerms.push('(equity = 0 OR equity IS null)')
+        }
+        if(title !== undefined){
+            valuesArray.push(`%${title}%`)
+            searchTerms.push(`title ILIKE $${valuesArray.length}`)
         }
         // constructing final queryLine
         if(searchTerms.length > 0){
@@ -66,7 +66,7 @@ class Job {
                                                 WHERE title = $1 AND 
                                                 company_handle = $2
                                                 `, [title, company_handle]);
-        if (duplicateCheck.rows[0]) throw new ExpressError('Duplicate Job', 400)
+        if (duplicateCheck.rows[0]) throw new BadRequestError("Duplicate job")
 
         const newJob = await db.query(`INSERT INTO jobs (title, salary, equity, company_handle)
                                         VALUES ($1, $2, $3, $4)
@@ -80,17 +80,26 @@ class Job {
     // updating an existing job
     // returning the updated job
     // {title, salary, equity} => {id, salary, equity, company_handle}
+    // cannot update id and company_handle related to a job
+    
+    static async update(id, data){
 
-    static async update({id, title, salary, equity}){
-        const result = await db.query(`UPDATE jobs SET title = $1, salary = $2, equity = $3
-                                        WHERE id = $4
-                                        RETURNING id, title, salary, equity, company_handle`,
-                                        [title, salary, equity, id])
+        let {title, salary, equity} = data
+        const result = await db.query(`SELECT title, salary, equity FROM jobs WHERE id = $1`, [id])
+        const job = result.rows[0]
+        
+        if (!job) throw new NotFoundError('Job not Found')
+        
+        if(title === undefined) title = job.title;
+        if(salary === undefined) salary = job.salary;
+        if(equity === undefined) equity = job.equity
+        
+        const jobUpdate = await db.query(`UPDATE jobs SET title = $1, salary = $2, equity = $3
+                                          WHERE id = $4
+                                          RETURNING id, title, salary, equity, company_handle`,
+                                          [title, salary, equity, id])
 
-        if (!result.rows[0]){
-            throw new NotFoundError('Job not Found')
-        }
-        return result.rows[0]
+        return jobUpdate.rows[0]
     }
 
 

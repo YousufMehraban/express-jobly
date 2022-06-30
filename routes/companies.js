@@ -44,7 +44,7 @@ router.post("/", ensureIsAdmin, async function (req, res, next) {
 /** GET /  =>
  *   { companies: [ { handle, name, description, numEmployees, logoUrl }, ...] }
  *
- * Can filter on provided search filters:
+ * Can filter the search based on the following terms:
  * - minEmployees
  * - maxEmployees
  * - nameLike (will find case-insensitive, partial matches)
@@ -86,7 +86,6 @@ router.get("/", async function (req, res, next) {
 
 router.get("/:handle", async function (req, res, next) {
   try {
-    console.log(res.locals.user)
     const company = await Company.get(req.params.handle);
     return res.json({ company });
   } catch (err) {

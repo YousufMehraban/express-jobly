@@ -95,8 +95,8 @@ router.patch('/:id', ensureIsAdmin, async function(req, res, next){
             throw new BadRequestError(err)
         } 
         
-        const queryLine = {...data, ...req.params}
-        const job = await Job.update(queryLine)
+        // const queryLine = {...data, ...req.params}
+        const job = await Job.update(req.params.id, req.body)
         return res.json({job})
 
     }catch(e){

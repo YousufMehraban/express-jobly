@@ -87,6 +87,42 @@ describe("findAll", function () {
   });
 });
 
+/************************************** filter findAll based on minEmployees, maxEmployees, name */
+
+describe("/get findAll({maxEmployees:2})", function () {
+  test("works: with filter", async function () {
+    let companies = await Company.findAll({maxEmployees:2});
+    expect(companies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      },
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+    ]);
+  });
+  test("works: with filter", async function () {
+    let companies = await Company.findAll({maxEmployees:3, name:'c1'});
+    expect(companies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      }
+    ]);
+  });
+});
+
 /************************************** get */
 
 describe("get", function () {
@@ -98,6 +134,15 @@ describe("get", function () {
       description: "Desc1",
       numEmployees: 1,
       logoUrl: "http://c1.img",
+      jobs: [
+        {
+          id: expect.any(Number), 
+          title: 'testjob1', 
+          salary: 500, 
+          equity: "0.01", 
+          company_handle: 'c1'
+        },
+     ],
     });
   });
 

@@ -46,6 +46,11 @@ class Company {
 
   /** Find all companies.
    *
+   * Can filter the search based on the following searchTerms:
+   * - minEmployees
+   * - maxEmployees
+   * - nameLike (will find case-insensitive, partial matches)
+   *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
@@ -56,7 +61,7 @@ class Company {
     let query =`SELECT handle,
                   name,
                   description,
-                  num_employees AS numEmployees,
+                  num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
            FROM companies`;
     
@@ -113,7 +118,7 @@ class Company {
 
     const company = companyRes.rows[0];
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    if (!company) throw new NotFoundError(`Company Not Found: ${handle}`);
 
     const companyJobs = await db.query(
                                         `SELECT * FROM jobs
